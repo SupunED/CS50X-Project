@@ -3,3 +3,60 @@
 {% block title %}
     Index
 {% endblock %}
+
+{% block main %}
+    <!-- Greeting -->
+    <div class="text-center mb-4">
+        <h1 class="fw-bold">{{ greeting }}</h1>
+    </div>
+
+    <!-- Transaction Form Card -->
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card-header bg-primary text-white fw-bold">
+            Add New Transaction
+        </div>
+        <div class="card-body">
+            <form action="/" method="post">
+
+                <!-- Transaction Type -->
+                <div class="mb-3">
+                    <label for="type" class="form-label">Transaction Type</label>
+                    <select name="type" id="type" class="form-select" required>
+                        <option value="" disabled selected>Choose...</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+
+                <!-- Amount -->
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" name="amount" id="amount" class="form-control" step="0.01" placeholder="Enter amount" min="0.00" required>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <input type="text" name="description" id="description" class="form-control" placeholder="e.g., Income from stocks, Car repair expenses">
+                </div>
+
+                <!-- Date -->
+                <div class="mb-3">
+                    <label for="date" class="form-label">Transaction Date</label>
+                    <input type="date" name="date" id="date" class="form-control" required>
+                </div>
+
+                <!-- Category -->
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <input type="text" name="category" id="category" class="form-control" placeholder="e.g., Food, Entertainment, Utilities" required>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary fw-bold">Add Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Overview
+{% endblock %}
+
+{% block main %}
+<div class="container">
+    <h2 class="text-center fw-bold mb-4">Overview</h2>
+
+    <!-- Cash Balance Card -->
+    <div class="card shadow-sm text-center mb-4 mx-auto" style="max-width: 300px;">
+        <div class="card-body">
+            <h5 class="card-title fw-bold">Current Cash Balance</h5>
+            <p class="card-text display-6 text-primary">Rs.{{ cash_balance | round(2) }}</p>
+        </div>
+    </div>
+
+    <!-- Income vs Expense Pie Chart -->
+    <div class="card shadow-sm mx-auto" style="max-width: 500px;">
+        <div class="card-body">
+            <canvas id="incomeExpenseChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+    const incomeExpenseChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Income', 'Expense'],
+            datasets: [{
+                label: 'Amount',
+                data: [{{ total_income }}, {{ total_expense }}],
+                backgroundColor: ['#28a745', '#dc3545'],
+                borderColor: ['#28a745', '#dc3545'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 14 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': Rs.' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

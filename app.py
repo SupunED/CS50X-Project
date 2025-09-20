@@ -2,7 +2,7 @@ from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from helpers import login_required, apology
 
@@ -25,10 +25,76 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    return render_template("index.html")
+    
+    # Get user_id
+    user_id = session.get("user_id")
+    
+    if request.method == "GET":
+        
+        # Get user details from db to display
+        user_details = db.execute("SELECT * FROM users WHERE id = ?", user_id)
+        username = user_details[0]["username"]
+        current_hour = datetime.now().hour
+        greeting = ""
+        
+        if 5 <= current_hour < 12:
+            greeting = f"Good Morning, {username}!"
+        elif 12 <= current_hour < 18:
+            greeting = f"Good Afternoon, {username}!"
+        else:
+            greeting = f"Good Evening, {username}!"
+        
+        return render_template("index.html", greeting=greeting)
+    
+    else:
+        type = request.form.get("type")
+        amount_str = float(request.form.get("amount"))
+        description = request.form.get("description")
+        date = request.form.get("date")
+        category = request.form.get("category")
+        
+        if type not in ["income", "expense"]:
+            return apology("Invalid Transaction Type!")
+
+        # Validate amount
+        try:
+            amount = float(amount_str)  # convert string to float
+            if amount < 0:
+                return apology("Amount must be positive!")
+        except ValueError:
+            return apology("Invalid Transaction Amount!")  # not a number
+
+        if not description:
+            return apology("Description empty!")
+        if not date:
+            return apology("Date empty!")
+        if not category:
+            return apology("Category empty!")
+        
+        # Enter transaction into the db
+        result = db.execute("INSERT INTO transactions (user_id, type, amount, description, date, category) VALUES (?, ?, ?, ?, ?, ?)", user_id, type, amount, description, date, category)
+        
+        if result:
+            user_details = db.execute("SELECT * FROM users WHERE id = ?", user_id)
+            cash_balance_before = user_details[0]["cash"]
+            new_cash_balance = cash_balance_before
+            
+            if type == "income":
+                new_cash_balance += amount
+            else:
+                new_cash_balance -= amount
+            
+            # update user cash balance after transaction
+            db.execute("UPDATE users SET cash = ? WHERE id = ?", new_cash_balance, user_id)
+            
+            flash("Transaction Successfull!", "success")
+            return redirect("/")
+            
+                
+             
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -100,6 +166,54 @@ def register():
             else:
                 return apology("Something went wrong!")
         
+
+@app.route("/transactions")
+@login_required
+def transations():
+    
+    # get user_id
+    user_id = session["user_id"]
+    
+    # retrieve transaction history of the user
+    rows = db.execute("SELECT * FROM transactions WHERE user_id = ?", user_id)
+    
+    # Convert UTC datetime to IST (+5:30)
+    for row in rows:
+        if row['datetime']:
+            # parse the string from DB to datetime object
+            utc_dt = datetime.strptime(row['datetime'], "%Y-%m-%d %H:%M:%S")
+            # add 5 hours 30 minutes
+            ist_dt = utc_dt + timedelta(hours=5, minutes=30)
+            # format back to string for display
+            row['datetime'] = ist_dt.strftime("%Y-%m-%d %H:%M:%S")
+    
+    return render_template("transactions.html", rows=rows)
+
+
+
+
+
+@app.route("/overview")
+@login_required
+def overview():
+    user_id = session["user_id"]
+
+    # Get cash balance of the user
+    row = db.execute("SELECT cash FROM users WHERE id = ?", user_id)
+    cash_balance = row[0]["cash"]
+
+    # get total income
+    total_income = db.execute(
+        "SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'income'", user_id
+    )[0]["total"] or 0
+
+    # get total expense
+    total_expense = db.execute(
+        "SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'expense'", user_id
+    )[0]["total"] or 0
+
+    return render_template("overview.html", total_income=total_income, total_expense=total_expense, cash_balance=cash_balance)
+
 
 
 if __name__ == "__main__":

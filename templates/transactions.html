@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Transactions
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <h2 class="mb-4 fw-bold text-center">Your Transaction History</h2>
+
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle shadow-sm">
+                <thead class="table-primary">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Date of Transaction</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td class="{% if row.type == 'income' %}text-success fw-bold{% else %}text-danger fw-bold{% endif %}">
+                            {{ row.type | capitalize }}
+                        </td>
+                        <td>Rs.{{ row.amount }}</td>
+                        <td>{{ row.description }}</td>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.datetime }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No transactions found. Start by adding one!
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}
